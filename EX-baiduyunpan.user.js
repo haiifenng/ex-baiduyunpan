@@ -21,7 +21,9 @@
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_info
+// @grant        GM_setClipboard
 // @require      https://cdn.bootcss.com/clipboard.js/1.5.16/clipboard.min.js
+// @require      http://pstatic.xunlei.com/js/base64.js
 // ==/UserScript==
 
 (function(require, define, Promise) {
@@ -137,6 +139,13 @@
             },
             availableProduct: ['pan', 'share', 'enterprise']
         }, {
+            title: '复制迅雷链接',
+            'click': function() {
+                var fetchDownLinks = require('ex-yunpan:fetchDownLinks.js');
+                fetchDownLinks.start(ctx, dServ, false, true);
+            },
+            availableProduct: ['pan', 'share', 'enterprise']
+        }, {
             title: '复制压缩链接',
             'click': function() {
                 var fetchDownLinks = require('ex-yunpan:fetchDownLinks.js');
@@ -170,7 +179,7 @@
     define('ex-yunpan:fetchDownLinks.js', function (require, exports, module) {
         var $ = require('base:widget/libs/jquerypacket.js');
 
-        function start(ctx, dServ, allZip) {
+        function start(ctx, dServ, allZip, isThunder) {
             var selectedList = ctx.list.getSelected();
             if (selectedList.length === 0) return ctx.ui.tip({ mode: 'caution', msg: '您还没有选择下载的文件' });
             ctx.ui.tip({ mode: 'loading', msg: '开始请求链接...' });
@@ -273,6 +282,20 @@
                 clipboard.on('error', function(e) {
                     ctx.ui.tip({ mode: 'caution', msg: '复制失败' });
                 });
+                //如果从复制迅雷链接动作触发
+                if (isThunder === true) {
+                    var t_links=[];
+                    for(var i in dlinks){
+                        var url= dlinks[i];
+                        var t_url = ThunderEncode(url);
+                        t_links.push(t_url);
+                    }
+                    GM_setClipboard(t_links.join('\n'), 'text');
+                    //setTimeout(function(){
+                        //GM_setClipboard(" ", 'text');
+                    //},1000);
+                    return;
+                }
                 var text = '<textarea id="bar" rows="' + ((dlinks.length > 20 ? 20 : dlinks.length) + 1) + '" style="width: 100%;white-space: nowrap;">' + dlinks.join('\n') + '</textarea>';
                 var dialog = ctx.ui.confirm({
                     title: '复制链接',
